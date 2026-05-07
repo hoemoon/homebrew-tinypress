@@ -16,7 +16,17 @@ class Tinypress < Formula
              "--configuration", "release",
              "--disable-sandbox",
              "-Xswiftc", "-Osize"
-      bin.install ".build/release/tinypress"
+      # SPM's `resource_bundle_accessor.swift` resolves the resource bundle
+      # via `Bundle.main.bundleURL`, which follows the launch path — through
+      # a `bin/` symlink it would look in `bin/` instead of `libexec/` and
+      # miss the bundle. A tiny wrapper exec's the real binary so
+      # `_NSGetExecutablePath` reports the libexec path.
+      libexec.install ".build/release/tinypress"
+      libexec.install ".build/release/TinyPress_TinyPressKit.bundle"
+      (bin/"tinypress").write <<~SH
+        #!/bin/bash
+        exec "#{libexec}/tinypress" "$@"
+      SH
     end
   end
 
